@@ -26,6 +26,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+
 import com.example.wifidirect.DeviceListFragment.DeviceActionListener;
 
 
@@ -33,7 +36,8 @@ public class WifiDirectActivity extends Activity implements ChannelListener, Dev
 
     public static final String TAG = "wifidirectdemo";
 
-    private static final int PERMISSIONS_REQUEST_CODE_ACCESS_FINE_LOCATION = 1001;
+    //private static final int PERMISSIONS_REQUEST_CODE_ACCESS_FINE_LOCATION = 1001;
+    private static final int CODE_REQ_PERMISSIONS = 665;
 
     private WifiP2pManager manager;
     private boolean isWifiP2pEnabled = false;
@@ -50,18 +54,25 @@ public class WifiDirectActivity extends Activity implements ChannelListener, Dev
         this.isWifiP2pEnabled = isWifiP2pEnabled;
     }
 
+    protected void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
     //请求权限结果的回调
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                                           int[] grantResults) {
-        switch (requestCode) {
-            case PERMISSIONS_REQUEST_CODE_ACCESS_FINE_LOCATION:
-                // If request is cancelled, the result arrays are empty.
-                if  (grantResults.length > 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                    Log.e(TAG, "Fine location permission is not granted!");
-                    finish();
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == CODE_REQ_PERMISSIONS) {
+            for (int i = 0; i < grantResults.length; i++) {
+                if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
+                    showToast("缺少权限，请先授予权限: " + permissions[i]);
+                    return;
                 }
-                break;
+            }
+            if (!initP2p()) { //WifiP2p不可用
+                showToast("WifiP2p不可用，请检查WIFI是否开启或设备是否支持WifiP2p功能");
+                return;
+            }
+            showToast("已获得权限");
         }
     }
 
@@ -110,6 +121,15 @@ public class WifiDirectActivity extends Activity implements ChannelListener, Dev
         super.onCreate(savedInstanceState);
         //加载一个布局界面，填充屏幕的UI
         setContentView(R.layout.activity_main);
+        findViewById(R.id.btnCheckPermission).setOnClickListener(v ->
+                ActivityCompat.requestPermissions(WifiDirectActivity.this,
+                        new String[]{Manifest.permission.CHANGE_NETWORK_STATE,
+                                Manifest.permission.ACCESS_NETWORK_STATE,
+                                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                Manifest.permission.READ_EXTERNAL_STORAGE,
+                                Manifest.permission.ACCESS_WIFI_STATE,
+                                Manifest.permission.CHANGE_WIFI_STATE,
+                                Manifest.permission.ACCESS_FINE_LOCATION}, CODE_REQ_PERMISSIONS));
         // add necessary intent values to be matched.
         //WLAN P2P API定义当发生特定WLAN P2P事件时会广播的Intent，例如发现新的对等设备时，或设备的 WLAN 状态更改时
         //WiFIDirectBroadcastReceiver.java创建了处理这些 Intent 的广播接收器，在应用中注册接收这些Intent
@@ -122,15 +142,19 @@ public class WifiDirectActivity extends Activity implements ChannelListener, Dev
         //当设备的详细信息（例如设备名称）更改时广播。
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
 
-        if (!initP2p()) { //WifiP2p不可用
-            finish();
-        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-                && checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                    WifiDirectActivity.PERMISSIONS_REQUEST_CODE_ACCESS_FINE_LOCATION);
+                //&& checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                //!= PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(new String[]{Manifest.permission.CHANGE_NETWORK_STATE,
+                            Manifest.permission.ACCESS_NETWORK_STATE,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                            Manifest.permission.READ_EXTERNAL_STORAGE,
+                            Manifest.permission.ACCESS_WIFI_STATE,
+                            Manifest.permission.CHANGE_WIFI_STATE,
+                            Manifest.permission.ACCESS_FINE_LOCATION},
+                            CODE_REQ_PERMISSIONS);
             // After this point you wait for callback in
             // onRequestPermissionsResult(int, String[], int[]) overridden method
         }
@@ -216,14 +240,12 @@ public class WifiDirectActivity extends Activity implements ChannelListener, Dev
                 manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
                     @Override
                     public void onSuccess() {
-                        Toast.makeText(WifiDirectActivity.this, "Discovery Initiated",
-                                Toast.LENGTH_SHORT).show();
+                        showToast("开始搜索");
                     }
 
                     @Override
                     public void onFailure(int reasonCode) {
-                        Toast.makeText(WifiDirectActivity.this, "Discovery Failed : " + reasonCode,
-                                Toast.LENGTH_SHORT).show();
+                        showToast("搜索失败 : " + reasonCode);
                     }
                 });
                 return true;
