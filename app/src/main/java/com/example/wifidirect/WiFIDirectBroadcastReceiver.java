@@ -43,6 +43,7 @@ public class WiFIDirectBroadcastReceiver extends BroadcastReceiver {
      */
     @SuppressLint("MissingPermission")
     @Override
+    //出现特定事件后，Android系统会进行广播，此处接收广播并进行处理
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
         if (WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION.equals(action)) {
@@ -69,7 +70,7 @@ public class WiFIDirectBroadcastReceiver extends BroadcastReceiver {
             }
             Log.d(WifiDirectActivity.TAG, "P2P peers changed");
         } else if (WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
-
+            //当设备的 WLAN 连接状态更改时广播
             if (manager == null) {
                 return;
             }
@@ -90,6 +91,7 @@ public class WiFIDirectBroadcastReceiver extends BroadcastReceiver {
                 activity.resetData();
             }
         } else if (WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION.equals(action)) {
+            //当设备的详细信息（例如设备名称）更改时广播。
             DeviceListFragment fragment = (DeviceListFragment) activity.getFragmentManager()
                     .findFragmentById(R.id.frag_list);
             fragment.updateThisDevice((WifiP2pDevice) intent.getParcelableExtra(

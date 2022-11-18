@@ -33,6 +33,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 /**
  * A fragment that manages a particular peer and allows interaction with device
@@ -46,17 +47,21 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
     private WifiP2pInfo info;
     ProgressDialog progressDialog = null;
     static ProgressBar progressBar;
+    private Context context;
     public static String fileType;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        context = getActivity();
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         mContentView = inflater.inflate(R.layout.device_detail, null);
+        //进度条
         progressBar = mContentView.findViewById(R.id.progressBarSent);
+        //点击“连接”按钮
         mContentView.findViewById(R.id.btn_connect).setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -77,11 +82,13 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
 //                            }
 //                        }
                 );
+                //设备互联
                 ((DeviceListFragment.DeviceActionListener) getActivity()).connect(config);
 
             }
         });
 
+        //点击“断开”按钮
         mContentView.findViewById(R.id.btn_disconnect).setOnClickListener(
                 new View.OnClickListener() {
 
@@ -91,6 +98,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                     }
                 });
 
+        //点击“选择文件”按钮（发送方）
         mContentView.findViewById(R.id.btn_start_client).setOnClickListener(
                 new View.OnClickListener() {
 
@@ -116,14 +124,24 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
         TextView statusText = (TextView) mContentView.findViewById(R.id.status_text);
         statusText.setText("Sending: " + uri);
         Log.d(WifiDirectActivity.TAG, "Intent----------- " + uri);
+        //调用文件传输服务
         Intent serviceIntent = new Intent(getActivity(), FileTransferService.class);
         serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
-        fileType = uri.getPath();
-        fileType = fileType.substring(fileType.lastIndexOf('.')+1);
+        //获取文件类型
+        String path = FileUtils.getFilePathByUri(context,uri);
+        if(path != null){
+            path = FileUtils.getFilePathByUri(context,uri);
+            fileType = path.substring(path.lastIndexOf('.')+1);
+        }
+        else {
+            fileType = "unknown";
+        }
+        //将文件uri、连接设备的信息文件类型传递给服务
         serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString());
         serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,
                 info.groupOwnerAddress.getHostAddress());
         serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, 8988);
+        serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_TYPE, fileType);
         getActivity().startService(serviceIntent);
     }
 
@@ -143,12 +161,13 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
 
         // InetAddress from WifiP2pInfo struct.
         view = (TextView) mContentView.findViewById(R.id.device_info);
-        view.setText("Group Owner IP - " + info.groupOwnerAddress.getHostAddress());
+        view.setText("群主 IP - " + info.groupOwnerAddress.getHostAddress());
 
         // After the group negotiation, we assign the group owner as the file
         // server. The file server is single threaded, single connection server
         // socket.
         if (info.groupFormed && info.isGroupOwner) {
+            //群主准备进行文件接收，为避免UI阻塞卡顿，进入后台异步任务，本质为多线程
             new FileServerAsyncTask(getActivity(), mContentView.findViewById(R.id.status_text))
                     .execute();
         } else if (info.groupFormed) {
@@ -169,6 +188,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
      * @param device the device to be displayed
      */
     public void showDetails(WifiP2pDevice device) {
+        //显示设备详细信息
         this.device = device;
         this.getView().setVisibility(View.VISIBLE);
         TextView view = (TextView) mContentView.findViewById(R.id.device_address);
@@ -218,21 +238,40 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
             try {
                 ServerSocket serverSocket = new ServerSocket(8988);
                 Log.d(WifiDirectActivity.TAG, "Server: Socket opened");
+                //socket成功建立连接前会一直阻塞在此处
                 Socket client = serverSocket.accept();
                 Log.d(WifiDirectActivity.TAG, "Server: connection done");
+
+
+                //Log.d(WifiDirectActivity.TAG, "server: copying files " + f.toString());
+                InputStream inputstream = client.getInputStream();
+                //输入流前十个字节为文件类型
+                byte buf[] = new byte[10];
+                inputstream.read(buf);
+                int i;
+                for (i = 0; i < 10; i++) {
+                    if(buf[i] == 0){
+                        break;
+                    }
+                }
+                byte buf2[] = new byte[i];
+                for (int j = 0; j < i; j++) {
+                    buf2[j] = buf[j];
+                }
+                String file_type = new String(buf2, StandardCharsets.UTF_8);
+                //接收方在本机创建文件
                 final File f = new File(context.getExternalFilesDir("received"),
-                        "wifip2pshared-" + System.currentTimeMillis()
-                                + fileType);
+                        "wifip2pshared-" + System.currentTimeMillis()+"."+file_type);
+
+                //int x = file_type.length();
 
                 File dirs = new File(f.getParent());
                 if (!dirs.exists())
                     dirs.mkdirs();
                 f.createNewFile();
 
-
-                Log.d(WifiDirectActivity.TAG, "server: copying files " + f.toString());
-                InputStream inputstream = client.getInputStream();
-                copyFile(inputstream, new FileOutputStream(f));
+                //写入刚刚创建的文件
+                origincopyFile(inputstream, new FileOutputStream(f));
                 serverSocket.close();
                 return f.getAbsolutePath();
             } catch (IOException e) {
@@ -259,6 +298,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                 intent.setAction(android.content.Intent.ACTION_VIEW);
                 intent.setDataAndType(fileUri, "*/*");
                 intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                //查看接收到的文件
                 context.startActivity(intent);
             }
 
@@ -275,7 +315,50 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
 
     }
 
-    public static boolean copyFile(InputStream inputStream, OutputStream out) {
+    //发送方uri输入流写入输出流（接收方socket)
+    public static boolean copyFile(InputStream inputStream, OutputStream out, String filetype) {
+        byte buf[] = new byte[1024];
+        int len;
+        int sentSize=0;
+        float perc;
+        int times = 0;
+        try {
+            int totSize = inputStream.available();
+            while ((len = inputStream.read(buf)) != -1) {
+                //首先发送文件类型
+                if(times == 0){
+                    byte[] bytes = new byte[10];
+                    byte[] bytes2 = filetype.getBytes();
+                    for(int i=0;i<10;i++){
+                        if(i<filetype.length()){
+                            bytes[i] = bytes2[i];
+                        }else{
+                            bytes[i] = 0;
+                        }
+                    }
+                    out.write(bytes);
+                    times++;
+                }
+                out.write(buf, 0, len);
+                sentSize += len;
+                perc = (sentSize*100.0f)/totSize;
+                Log.d("Sent ",perc+"%");
+                //progressDialogSent.setMessage("We have sent "+(sentSize/totSize)*100+"% of the file");
+                progressBar.setProgress((int)(perc));
+            }
+            Log.d("Sent ","100%");
+            out.close();
+            inputStream.close();
+            //progressDialogSent.dismiss();
+        } catch (IOException e) {
+            Log.d(WifiDirectActivity.TAG, e.toString());
+            return false;
+        }
+        return true;
+    }
+
+    //由接收方socket输出流写入文件
+    public static boolean origincopyFile(InputStream inputStream, OutputStream out) {
         byte buf[] = new byte[1024];
         int len;
         int sentSize=0;
@@ -287,10 +370,9 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
             while ((len = inputStream.read(buf)) != -1) {
                 out.write(buf, 0, len);
                 sentSize += len;
-                perc = (sentSize*1.0f)/totSize;
+                perc = (sentSize*100.0f)/totSize;
                 Log.d("Sent ",perc+"%");
-                //progressDialogSent.setMessage("We have sent "+(sentSize/totSize)*100+"% of the file");
-                progressBar.setProgress((int)(perc*100));
+                progressBar.setProgress((int)(perc));
             }
             out.close();
             inputStream.close();

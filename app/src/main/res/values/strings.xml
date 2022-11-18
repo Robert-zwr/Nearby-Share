@@ -4,16 +4,16 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="enable_p2p_button">开启/关闭WIFI直连</string>
     <string name="discover_peers_button">搜索附近设备</string>
-    <string name="connect_peer_button">Connect</string>
-    <string name="disconnect_peer_button">Disconnect</string>
-    <string name="get_file_button">Launch Gallery</string>
+    <string name="connect_peer_button">连接</string>
+    <string name="disconnect_peer_button">断开</string>
+    <string name="get_file_button">选择文件</string>
     <string name="empty"></string>
-    <string name="yes">yes</string>
-    <string name="no">no</string>
-    <string name="client_text">This device will act as a client. Click on Gallery button to pick a local(stored) file</string>
-    <string name="empty_message">No devices found. Turn on P2P and perform discovery from the Action Bar</string>
+    <string name="yes">是</string>
+    <string name="no">否</string>
+    <string name="client_text">该设备将作为客户端，点击“选择文件”按钮来选择本地文件</string>
+    <string name="empty_message">找不到设备. 打开wifi直连并在右上角菜单栏进行周围可用设备搜索</string>
     <string name="p2p_off_warning">从上面的操作栏按钮或系统设置中启用WIFI直连</string>
-    <string name="group_owner_text">"Am I the Group Owner? "</string>
-    <string name="label_me">ME</string>
-    <string name="label_peers">PEERS</string>
+    <string name="group_owner_text">"是否为群主? "</string>
+    <string name="label_me">我的设备</string>
+    <string name="label_peers">周围设备</string>
 </resources>

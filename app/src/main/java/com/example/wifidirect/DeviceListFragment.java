@@ -43,11 +43,13 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        //监听周围peer设备的变换
         this.setListAdapter(new WiFiPeerListAdapter(getActivity(), R.layout.row_devices, peers));
 
     }
 
     @Override
+    //显示设备列表
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         mContentView = inflater.inflate(R.layout.device_list, null);
         return mContentView;
@@ -60,6 +62,7 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
         return device;
     }
 
+    //获取设备状态
     private static String getDeviceStatus(int deviceStatus) {
         Log.d(WifiDirectActivity.TAG, "Peer status :" + deviceStatus);
         switch (deviceStatus) {
@@ -83,6 +86,7 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
      * Initiate a connection with the peer.
      */
     @Override
+    //处理设备列表点击事件
     public void onListItemClick(ListView l, View v, int position, long id) {
         WifiP2pDevice device = (WifiP2pDevice) getListAdapter().getItem(position);
         ((DeviceActionListener) getActivity()).showDetails(device);
@@ -113,6 +117,7 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
             if (v == null) {
                 LayoutInflater vi = (LayoutInflater) getActivity().getSystemService(
                         Context.LAYOUT_INFLATER_SERVICE);
+                //获取本设备的布局
                 v = vi.inflate(R.layout.row_devices, null);
             }
             WifiP2pDevice device = items.get(position);
@@ -120,9 +125,11 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
                 TextView top = (TextView) v.findViewById(R.id.device_name);
                 TextView bottom = (TextView) v.findViewById(R.id.device_details);
                 if (top != null) {
+                    //上方填充设备名称
                     top.setText(device.deviceName);
                 }
                 if (bottom != null) {
+                    //下方填充设备状态
                     bottom.setText(getDeviceStatus(device.status));
                 }
             }
@@ -146,6 +153,7 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
     }
 
     @Override
+    //监听到peer列表变化，更新列表
     public void onPeersAvailable(WifiP2pDeviceList peerList) {
         if (progressDialog != null && progressDialog.isShowing()) {
             progressDialog.dismiss();
@@ -172,7 +180,7 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
         if (progressDialog != null && progressDialog.isShowing()) {
             progressDialog.dismiss();
         }
-        progressDialog = ProgressDialog.show(getActivity(), "Press back to cancel", "finding peers", true,
+        progressDialog = ProgressDialog.show(getActivity(), "点击返回以退出", "正在搜索周围设备", true,
                 true, new DialogInterface.OnCancelListener() {
 
                     @Override

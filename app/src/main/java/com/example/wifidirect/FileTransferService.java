@@ -26,6 +26,7 @@ public class FileTransferService extends IntentService {
     public static final String EXTRAS_FILE_PATH = "file_url";
     public static final String EXTRAS_GROUP_OWNER_ADDRESS = "go_host";
     public static final String EXTRAS_GROUP_OWNER_PORT = "go_port";
+    public static final String EXTRAS_FILE_TYPE = "file_type";
 
     public FileTransferService(String name) {
         super(name);
@@ -52,9 +53,11 @@ public class FileTransferService extends IntentService {
             try {
                 Log.d(WifiDirectActivity.TAG, "Opening client socket - ");
                 socket.bind(null);
+                //socket连接
                 socket.connect((new InetSocketAddress(host, port)), SOCKET_TIMEOUT);
 
                 Log.d(WifiDirectActivity.TAG, "Client socket - " + socket.isConnected());
+                String fileType = intent.getExtras().getString(EXTRAS_FILE_TYPE);
                 OutputStream stream = socket.getOutputStream();
                 ContentResolver cr = context.getContentResolver();
                 InputStream is = null;
@@ -63,7 +66,8 @@ public class FileTransferService extends IntentService {
                 } catch (FileNotFoundException e) {
                     Log.d(WifiDirectActivity.TAG, e.toString());
                 }
-                DeviceDetailFragment.copyFile(is, stream);
+                DeviceDetailFragment.copyFile(is, stream, fileType);
+                //stream.write("end".getBytes());
                 Log.d(WifiDirectActivity.TAG, "Client: Data written");
             } catch (IOException e) {
                 Log.e(WifiDirectActivity.TAG, e.getMessage());

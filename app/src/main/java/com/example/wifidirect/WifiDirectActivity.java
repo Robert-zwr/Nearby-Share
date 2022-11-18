@@ -142,7 +142,7 @@ public class WifiDirectActivity extends Activity implements ChannelListener, Dev
         //当设备的详细信息（例如设备名称）更改时广播。
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
 
-
+        ////启动APP后先进行一次权限检查
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
                 //&& checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
                 //!= PackageManager.PERMISSION_GRANTED
@@ -255,6 +255,7 @@ public class WifiDirectActivity extends Activity implements ChannelListener, Dev
     }
 
     @Override
+    //显示设备详细信息
     public void showDetails(WifiP2pDevice device) {
         DeviceDetailFragment fragment = (DeviceDetailFragment) getFragmentManager()
                 .findFragmentById(R.id.frag_detail);
