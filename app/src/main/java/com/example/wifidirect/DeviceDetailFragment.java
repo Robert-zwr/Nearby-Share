@@ -1,6 +1,8 @@
 package com.example.wifidirect;
 
 import android.app.Fragment;
+import android.content.ContentResolver;
+import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
 
 import androidx.core.content.FileProvider;
@@ -34,6 +36,8 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * A fragment that manages a particular peer and allows interaction with device
@@ -48,12 +52,14 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
     ProgressDialog progressDialog = null;
     static ProgressBar progressBar;
     private Context context;
+    //private Collection<WifiP2pDevice> list = new ArrayList<>();
     public static String fileType;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         context = getActivity();
+        //WifiP2pManager manager =
     }
 
     @Override
@@ -69,6 +75,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                 WifiP2pConfig config = new WifiP2pConfig();
                 config.deviceAddress = device.deviceAddress;
                 config.wps.setup = WpsInfo.PBC;
+                config.groupOwnerIntent = 15;
                 if (progressDialog != null && progressDialog.isShowing()) {
                     progressDialog.dismiss();
                 }
@@ -84,7 +91,6 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                 );
                 //设备互联
                 ((DeviceListFragment.DeviceActionListener) getActivity()).connect(config);
-
             }
         });
 
@@ -128,13 +134,12 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
         Intent serviceIntent = new Intent(getActivity(), FileTransferService.class);
         serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
         //获取文件类型
-        String path = FileUtils.getFilePathByUri(context,uri);
-        if(path != null){
+        String path = null;
+        try {
             path = FileUtils.getFilePathByUri(context,uri);
             fileType = path.substring(path.lastIndexOf('.')+1);
-        }
-        else {
-            fileType = "unknown";
+        } catch (IOException e) {
+            fileType = "txt";
         }
         //将文件uri、连接设备的信息文件类型传递给服务
         serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString());

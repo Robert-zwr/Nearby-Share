@@ -4,15 +4,27 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.widget.ImageView;
+
+import java.io.IOException;
 
 public class FileUtils {
-    public static String getFilePathByUri(Context context, Uri uri) {
-        String path = null;
+    public static String getFilePathByUri(Context context, Uri uri) throws IOException {
+        //String path = null;
+        String path = uri.toString();
+        String suffix = path.substring(path.lastIndexOf('.')+1);
+        if(suffix.equals("docx")||suffix.equals("doc")||suffix.equals("pdf")||suffix.equals("txt")||
+                suffix.equals("ppt")||suffix.equals("pptx")||suffix.equals("xls")||
+                suffix.equals("xlsx")||suffix.equals("zip")||suffix.equals("rar")||
+                suffix.equals("apk")||suffix.equals("mp3")||suffix.equals("mp4")){
+            return uri.toString();
+        }
         // 以 file:// 开头的
         if (ContentResolver.SCHEME_FILE.equals(uri.getScheme())) {
             path = uri.getPath();
@@ -21,6 +33,7 @@ public class FileUtils {
         // 以 content:// 开头的，比如 content://media/extenral/images/media/17766
         if (ContentResolver.SCHEME_CONTENT.equals(uri.getScheme()) && Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
             Cursor cursor = context.getContentResolver().query(uri, new String[]{MediaStore.Images.Media.DATA}, null, null, null);
+
             if (cursor != null) {
                 if (cursor.moveToFirst()) {
                     int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
@@ -63,6 +76,9 @@ public class FileUtils {
                         contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
                     } else if ("audio".equals(type)) {
                         contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+                    } else{
+                        //contentUri = MediaStore.Files.getContentUri("external");
+                        return null;
                     }
                     final String selection = "_id=?";
                     final String[] selectionArgs = new String[]{split[1]};
@@ -70,6 +86,7 @@ public class FileUtils {
                     return path;
                 }
             }
+
         }
         return null;
     }

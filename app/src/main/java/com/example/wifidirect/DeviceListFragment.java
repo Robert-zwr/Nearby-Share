@@ -27,6 +27,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -165,7 +166,11 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
             Log.d(WifiDirectActivity.TAG, "No devices found");
             return;
         }
+        for (WifiP2pDevice device : peerList.getDeviceList()) {
+            String deviceIPAddress = device.deviceAddress;
 
+            // Store the IP address in a list or map for future use
+        }
     }
 
     public void clearPeers() {
@@ -201,6 +206,7 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
         void cancelDisconnect();
 
         void connect(WifiP2pConfig config);
+        //Collection<WifiP2pDevice> connect(WifiP2pConfig config);
 
         void disconnect();
     }

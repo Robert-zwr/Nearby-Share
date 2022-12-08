@@ -12,6 +12,7 @@ import android.content.pm.PackageManager;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
+import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.WifiP2pManager.ActionListener;
 import android.net.wifi.p2p.WifiP2pManager.Channel;
@@ -30,6 +31,9 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 
 import com.example.wifidirect.DeviceListFragment.DeviceActionListener;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 
 public class WifiDirectActivity extends Activity implements ChannelListener, DeviceActionListener {
@@ -267,6 +271,7 @@ public class WifiDirectActivity extends Activity implements ChannelListener, Dev
     @Override
     public void connect(WifiP2pConfig config) {
         //启动与具有指定配置的设备的对等连接
+        //config.notify();
         manager.connect(channel, config, new ActionListener() {
 
             @Override
@@ -280,6 +285,13 @@ public class WifiDirectActivity extends Activity implements ChannelListener, Dev
                         Toast.LENGTH_SHORT).show();
             }
         });
+        /*manager.requestGroupInfo(channel, new WifiP2pManager.GroupInfoListener() {
+            @Override
+            public void onGroupInfoAvailable(WifiP2pGroup wifiP2pGroup) {
+                //clientlist = wifiP2pGroup.getClientList();
+                boolean x = wifiP2pGroup.isGroupOwner();
+            }
+        });*/
     }
 
     @Override
