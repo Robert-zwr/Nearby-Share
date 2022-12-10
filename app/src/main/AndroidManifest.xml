@@ -23,6 +23,9 @@
             android:exported="true"></receiver>
 
         <service
+            android:name=".SocketConnectService"
+            android:exported="false" />
+        <service
             android:name=".FileTransferService"
             android:exported="false" />
 

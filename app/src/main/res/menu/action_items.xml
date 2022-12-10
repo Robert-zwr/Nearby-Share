@@ -12,4 +12,10 @@
         android:icon="@drawable/ic_action_discover"
         android:title="@string/discover_peers_button"
         app:showAsAction="ifRoom|withText" />
+
+    <item
+        android:id="@+id/atn_create_group"
+        android:icon="@drawable/ic_action_discover"
+        android:title="@string/create_group_button"
+        app:showAsAction="ifRoom|withText" />
 </menu>

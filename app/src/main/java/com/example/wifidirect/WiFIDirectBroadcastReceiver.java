@@ -11,6 +11,8 @@ import android.net.wifi.p2p.WifiP2pManager.Channel;
 import android.net.wifi.p2p.WifiP2pManager.PeerListListener;
 import android.util.Log;
 
+import java.util.ArrayList;
+
 /**
  * A BroadcastReceiver that notifies of important wifi p2p events.
  * 详细用法见https://developer.android.google.cn/guide/topics/connectivity/wifip2p?hl=zh-cn#create-br
@@ -69,6 +71,7 @@ public class WiFIDirectBroadcastReceiver extends BroadcastReceiver {
                         .findFragmentById(R.id.frag_list));
             }
             Log.d(WifiDirectActivity.TAG, "P2P peers changed");
+
         } else if (WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
             //当设备的 WLAN 连接状态更改时广播
             if (manager == null) {

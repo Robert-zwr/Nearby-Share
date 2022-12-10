@@ -27,7 +27,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -40,6 +39,10 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
     ProgressDialog progressDialog = null;
     View mContentView = null;
     private WifiP2pDevice device;
+
+    /*public static ArrayList<String> getMAC_info(){
+        return MAC_info;
+    }*/
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -166,11 +169,12 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
             Log.d(WifiDirectActivity.TAG, "No devices found");
             return;
         }
+        /*MAC_info.clear();
         for (WifiP2pDevice device : peerList.getDeviceList()) {
             String deviceIPAddress = device.deviceAddress;
-
             // Store the IP address in a list or map for future use
-        }
+            MAC_info.add(deviceIPAddress);
+        }*/
     }
 
     public void clearPeers() {
@@ -206,9 +210,10 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
         void cancelDisconnect();
 
         void connect(WifiP2pConfig config);
-        //Collection<WifiP2pDevice> connect(WifiP2pConfig config);
 
         void disconnect();
+
+        //String get_own_ip(String mac);
     }
 
 }

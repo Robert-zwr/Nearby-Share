@@ -12,7 +12,6 @@ import android.content.pm.PackageManager;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
-import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.WifiP2pManager.ActionListener;
 import android.net.wifi.p2p.WifiP2pManager.Channel;
@@ -32,11 +31,12 @@ import androidx.core.app.ActivityCompat;
 
 import com.example.wifidirect.DeviceListFragment.DeviceActionListener;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.net.NetworkInterface;
+import java.util.Collections;
+import java.util.List;
 
 
-public class WifiDirectActivity extends Activity implements ChannelListener, DeviceActionListener {
+public class WifiDirectActivity extends Activity implements ChannelListener, DeviceActionListener{
 
     public static final String TAG = "wifidirectdemo";
 
@@ -44,11 +44,15 @@ public class WifiDirectActivity extends Activity implements ChannelListener, Dev
     private static final int CODE_REQ_PERMISSIONS = 665;
 
     private WifiP2pManager manager;
+    //private WifiP2pManager temp_manager;
     private boolean isWifiP2pEnabled = false;
     private boolean retryChannel = false;
 
     private final IntentFilter intentFilter = new IntentFilter();
     private Channel channel;
+    //private Channel temp_channel;
+    //private WifiP2pInfo info;
+    public static String member_IP;
     private BroadcastReceiver receiver = null;
 
     /**
@@ -77,6 +81,7 @@ public class WifiDirectActivity extends Activity implements ChannelListener, Dev
                 return;
             }
             showToast("已获得权限");
+
         }
     }
 
@@ -253,6 +258,20 @@ public class WifiDirectActivity extends Activity implements ChannelListener, Dev
                     }
                 });
                 return true;
+            case R.id.atn_create_group:
+                //创建群组
+                manager.createGroup(channel, new WifiP2pManager.ActionListener() {
+                    @Override
+                    public void onSuccess() {
+                        showToast("创建群组成功");
+                    }
+
+                    @Override
+                    public void onFailure(int reason) {
+                        showToast("创建群组失败");
+                    }
+                });
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -270,6 +289,32 @@ public class WifiDirectActivity extends Activity implements ChannelListener, Dev
     @SuppressLint("MissingPermission")
     @Override
     public void connect(WifiP2pConfig config) {
+        /*temp_manager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
+        temp_channel = temp_manager.initialize(this, getMainLooper(), null);
+        temp_manager.createGroup(temp_channel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {}
+
+            @Override
+            public void onFailure(int reason) {
+                showToast("创建群组失败");
+            }
+        });
+        info = DeviceDetailFragment.getInfo();
+        member_IP = info.groupOwnerAddress.getHostAddress();
+        temp_manager.removeGroup(temp_channel, new ActionListener() {
+
+            @Override
+            public void onFailure(int reasonCode) {
+                Log.d(TAG, "Disconnect failed. Reason :" + reasonCode);
+
+            }
+
+            @Override
+            public void onSuccess() {}
+
+        });*/
+
         //启动与具有指定配置的设备的对等连接
         //config.notify();
         manager.connect(channel, config, new ActionListener() {
@@ -285,13 +330,6 @@ public class WifiDirectActivity extends Activity implements ChannelListener, Dev
                         Toast.LENGTH_SHORT).show();
             }
         });
-        /*manager.requestGroupInfo(channel, new WifiP2pManager.GroupInfoListener() {
-            @Override
-            public void onGroupInfoAvailable(WifiP2pGroup wifiP2pGroup) {
-                //clientlist = wifiP2pGroup.getClientList();
-                boolean x = wifiP2pGroup.isGroupOwner();
-            }
-        });*/
     }
 
     @Override
@@ -315,6 +353,58 @@ public class WifiDirectActivity extends Activity implements ChannelListener, Dev
 
         });
     }
+
+    /*@Override
+    public String get_own_ip(String mac) {
+        try {
+            List<NetworkInterface> interfaces = Collections
+                    .list(NetworkInterface.getNetworkInterfaces());
+            final DeviceListFragment fragment = (DeviceListFragment) getFragmentManager()
+                    .findFragmentById(R.id.frag_list);
+            for (NetworkInterface intf : interfaces) {
+                //String a = getMACAddress(intf.getName());
+                //String b = fragment.getDevice().deviceAddress;
+                if (!getMACAddress(intf.getName()).equalsIgnoreCase(mac)) {
+                    // Log.v(TAG, "ignore the interface " + intf.getName());
+                    continue;
+                }
+                if (!intf.getName().contains("p2p"))
+                    continue;
+
+                Log.v(TAG,
+                        intf.getName() + "   " + getMACAddress(intf.getName()));
+
+                List<InetAddress> addrs = Collections.list(intf
+                        .getInetAddresses());
+
+                for (InetAddress addr : addrs) {
+                    // Log.v(TAG, "inside");
+
+                    if (!addr.isLoopbackAddress()) {
+                        // Log.v(TAG, "isnt loopback");
+                        String sAddr = addr.getHostAddress().toUpperCase();
+                        Log.v(TAG, "ip=" + sAddr);
+
+                        boolean isIPv4 = sAddr instanceof String;
+
+                        if (isIPv4) {
+                            if (sAddr.contains("192.168.49.")) {
+                                Log.v(TAG, "ip = " + sAddr);
+                                return sAddr;
+                            }
+                        }
+
+                    }
+
+                }
+            }
+
+        } catch (Exception ex) {
+            Log.v(TAG, "error in parsing");
+        } // for now eat exceptions
+        Log.v(TAG, "returning empty ip address");
+        return "";
+    }*/
 
     @Override
     public void onChannelDisconnected() {
@@ -367,5 +457,36 @@ public class WifiDirectActivity extends Activity implements ChannelListener, Dev
             }
         }
 
+    }
+
+    public static String getMACAddress(String interfaceName) {
+        try {
+            List<NetworkInterface> interfaces = Collections
+                    .list(NetworkInterface.getNetworkInterfaces());
+
+            for (NetworkInterface intf : interfaces) {
+                if (interfaceName != null) {
+                    if (!intf.getName().equalsIgnoreCase(interfaceName))
+                        continue;
+                }
+                byte[] mac = intf.getHardwareAddress();
+                if (mac == null)
+                    return "";
+                StringBuilder buf = new StringBuilder();
+                for (int idx = 0; idx < mac.length; idx++)
+                    buf.append(String.format("%02X:", mac[idx]));
+                if (buf.length() > 0)
+                    buf.deleteCharAt(buf.length() - 1);
+                return buf.toString();
+            }
+        } catch (Exception ex) {
+        } // for now eat exceptions
+        return "";
+        /*
+         * try { // this is so Linux hack return
+         * loadFileAsString("/sys/class/net/" +interfaceName +
+         * "/address").toUpperCase().trim(); } catch (IOException ex) { return
+         * null; }
+         */
     }
 }

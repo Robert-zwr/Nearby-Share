@@ -1,8 +1,6 @@
 package com.example.wifidirect;
 
 import android.app.Fragment;
-import android.content.ContentResolver;
-import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
 
 import androidx.core.content.FileProvider;
@@ -37,7 +35,11 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
 
 /**
  * A fragment that manages a particular peer and allows interaction with device
@@ -48,18 +50,16 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
     protected static final int CHOOSE_FILE_RESULT_CODE = 20;
     private View mContentView = null;
     private WifiP2pDevice device;
-    private WifiP2pInfo info;
+    private static WifiP2pInfo info;
     ProgressDialog progressDialog = null;
     static ProgressBar progressBar;
     private Context context;
-    //private Collection<WifiP2pDevice> list = new ArrayList<>();
     public static String fileType;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         context = getActivity();
-        //WifiP2pManager manager =
     }
 
     @Override
@@ -75,7 +75,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                 WifiP2pConfig config = new WifiP2pConfig();
                 config.deviceAddress = device.deviceAddress;
                 config.wps.setup = WpsInfo.PBC;
-                config.groupOwnerIntent = 15;
+                //config.groupOwnerIntent = 15;
                 if (progressDialog != null && progressDialog.isShowing()) {
                     progressDialog.dismiss();
                 }
@@ -89,8 +89,11 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
 //                            }
 //                        }
                 );
+
+                //my_ip = ((DeviceListFragment.DeviceActionListener) getActivity()).get_own_ip();
                 //设备互联
                 ((DeviceListFragment.DeviceActionListener) getActivity()).connect(config);
+
             }
         });
 
@@ -130,24 +133,36 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
         TextView statusText = (TextView) mContentView.findViewById(R.id.status_text);
         statusText.setText("Sending: " + uri);
         Log.d(WifiDirectActivity.TAG, "Intent----------- " + uri);
-        //调用文件传输服务
-        Intent serviceIntent = new Intent(getActivity(), FileTransferService.class);
-        serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
-        //获取文件类型
-        String path = null;
-        try {
-            path = FileUtils.getFilePathByUri(context,uri);
-            fileType = path.substring(path.lastIndexOf('.')+1);
-        } catch (IOException e) {
-            fileType = "txt";
+        Map<String,Integer> map = GetMemberIPAsyncTask.map;
+        Set<String> set=map.keySet();
+        Iterator<String> it=set.iterator();
+        while(it.hasNext()){
+            //System.out.println(it.next());
+            String ip = it.next();
+            int Group_Number = map.get(ip);
+            if(Group_Number == 0){
+                //调用文件传输服务
+                Intent serviceIntent = new Intent(getActivity(), FileTransferService.class);
+                serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
+                //获取文件类型
+                String path;
+                try {
+                    path = FileUtils.getFilePathByUri(context,uri);
+                    fileType = path.substring(path.lastIndexOf('.')+1);
+                } catch (IOException e) {
+                    fileType = "txt";
+                }
+                //String x = DeviceListFragment.getMAC_info().get(0);
+                //my_ip = ((DeviceListFragment.DeviceActionListener) getActivity()).get_own_ip(DeviceListFragment.getMAC_info().get(0));
+                //将文件uri、连接设备的信息文件类型传递给服务
+                serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString());
+                //serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,info.groupOwnerAddress.getHostAddress());
+                serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_MEMBER_ADDRESS,ip);
+                serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, 8988);
+                serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_TYPE, fileType);
+                getActivity().startService(serviceIntent);
+            }
         }
-        //将文件uri、连接设备的信息文件类型传递给服务
-        serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString());
-        serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,
-                info.groupOwnerAddress.getHostAddress());
-        serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, 8988);
-        serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_TYPE, fileType);
-        getActivity().startService(serviceIntent);
     }
 
     @Override
@@ -171,13 +186,21 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
         // After the group negotiation, we assign the group owner as the file
         // server. The file server is single threaded, single connection server
         // socket.
-        if (info.groupFormed && info.isGroupOwner) {
-            //群主准备进行文件接收，为避免UI阻塞卡顿，进入后台异步任务，本质为多线程
-            new FileServerAsyncTask(getActivity(), mContentView.findViewById(R.id.status_text))
-                    .execute();
+        if (info.groupFormed && !info.isGroupOwner) {
+            //与群主建立socket连接，以便群主获取自己的ip地址
+            Intent serviceIntent = new Intent(getActivity(), SocketConnectService.class);
+            serviceIntent.setAction(SocketConnectService.ACTION_CONNECT_SOCKET);
+            serviceIntent.putExtra(SocketConnectService.EXTRAS_GROUP_OWNER_ADDRESS,info.groupOwnerAddress.getHostAddress());
+            serviceIntent.putExtra(SocketConnectService.EXTRAS_GROUP_OWNER_PORT, 8989);
+            getActivity().startService(serviceIntent);
+
+            //非群主准备进行文件接收，为避免UI阻塞卡顿，进入后台异步任务，本质为多线程
+            new FileServerAsyncTask(getActivity(), mContentView.findViewById(R.id.status_text)).execute();
+
         } else if (info.groupFormed) {
             // The other device acts as the client. In this case, we enable the
             // get file button.
+            new GetMemberIPAsyncTask(getActivity(), mContentView.findViewById(R.id.status_text)).execute();
             mContentView.findViewById(R.id.btn_start_client).setVisibility(View.VISIBLE);
             ((TextView) mContentView.findViewById(R.id.status_text)).setText(getResources()
                     .getString(R.string.client_text));
@@ -389,4 +412,63 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
         return true;
     }
 
+    /**
+     * A simple server socket that accepts connection from group members and then get their ip
+     * address and group number.
+     */
+    public static class GetMemberIPAsyncTask extends AsyncTask<Void, Void, String> {
+
+        private Context context;
+        private TextView statusText;
+        //public static ArrayList<String> ip_list = new ArrayList<>();
+        public static Map<String,Integer> map = new HashMap<>();
+
+        /**
+         * @param context
+         * @param statusText
+         */
+        public GetMemberIPAsyncTask(Context context, View statusText) {
+            this.context = context;
+            this.statusText = (TextView) statusText;
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+            try {
+                ServerSocket serverSocket = new ServerSocket(8989);
+                //socket成功建立连接前会一直阻塞在此处
+                while(true){
+                    Socket client = serverSocket.accept();
+                    Log.d(WifiDirectActivity.TAG, "Server: connection done");
+
+                    InputStream inputstream = client.getInputStream();
+                    String mem_ip = ""+client.getInetAddress();
+                    //ip_list.add(mem_ip);
+                    map.put(mem_ip,0);
+                    client.close();
+                }
+            }catch (IOException e) {
+                Log.e(WifiDirectActivity.TAG, e.getMessage());
+                //return null;
+            }
+            return null;
+        }
+
+        /*
+         * (non-Javadoc)
+         * @see android.os.AsyncTask#onPostExecute(java.lang.Object)
+         */
+        @Override
+        protected void onPostExecute(String result) {}
+
+        /*
+         * (non-Javadoc)
+         * @see android.os.AsyncTask#onPreExecute()
+         */
+        @Override
+        protected void onPreExecute() {
+            statusText.setText("Waiting for group member ip");
+        }
+
+    }
 }
