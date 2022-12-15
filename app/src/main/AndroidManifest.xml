@@ -16,7 +16,8 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.Holo">
+        android:theme="@android:style/Theme.Holo"
+        android:requestLegacyExternalStorage="true">
         <receiver
             android:name=".WiFIDirectBroadcastReceiver"
             android:enabled="true"

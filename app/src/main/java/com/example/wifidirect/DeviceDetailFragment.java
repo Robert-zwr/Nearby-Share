@@ -27,6 +27,7 @@ import android.widget.TextView;
 
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,11 +35,18 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
+import javax.crypto.Cipher;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.SecretKeySpec;
 
 
 /**
@@ -90,7 +98,6 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
 //                        }
                 );
 
-                //my_ip = ((DeviceListFragment.DeviceActionListener) getActivity()).get_own_ip();
                 //设备互联
                 ((DeviceListFragment.DeviceActionListener) getActivity()).connect(config);
 
@@ -127,7 +134,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
-        // User has picked an image. Transfer it to group owner i.e peer using
+        // Group owner has picked a file. Transfer it to group member i.e peer using
         // FileTransferService.
         Uri uri = data.getData();
         TextView statusText = (TextView) mContentView.findViewById(R.id.status_text);
@@ -137,7 +144,6 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
         Set<String> set=map.keySet();
         Iterator<String> it=set.iterator();
         while(it.hasNext()){
-            //System.out.println(it.next());
             String ip = it.next();
             int Group_Number = map.get(ip);
             if(Group_Number == 0){
@@ -150,16 +156,16 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                     path = FileUtils.getFilePathByUri(context,uri);
                     fileType = path.substring(path.lastIndexOf('.')+1);
                 } catch (IOException e) {
+                    path = "";
                     fileType = "txt";
                 }
-                //String x = DeviceListFragment.getMAC_info().get(0);
-                //my_ip = ((DeviceListFragment.DeviceActionListener) getActivity()).get_own_ip(DeviceListFragment.getMAC_info().get(0));
                 //将文件uri、连接设备的信息文件类型传递给服务
-                serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString());
+                serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_URI, uri.toString());
                 //serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,info.groupOwnerAddress.getHostAddress());
                 serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_MEMBER_ADDRESS,ip);
-                serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, 8988);
+                serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_MEMBER_PORT, 8988);
                 serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_TYPE, fileType);
+                serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, path);
                 getActivity().startService(serviceIntent);
             }
         }
@@ -251,6 +257,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
 
         private Context context;
         private TextView statusText;
+        private String file_type;
 
         /**
          * @param context
@@ -286,7 +293,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                 for (int j = 0; j < i; j++) {
                     buf2[j] = buf[j];
                 }
-                String file_type = new String(buf2, StandardCharsets.UTF_8);
+                file_type = new String(buf2, StandardCharsets.UTF_8);
                 //接收方在本机创建文件
                 final File f = new File(context.getExternalFilesDir("received"),
                         "wifip2pshared-" + System.currentTimeMillis()+"."+file_type);
@@ -315,19 +322,46 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
         @Override
         protected void onPostExecute(String result) {
             if (result != null) {
-                statusText.setText("File copied - " + result);
+                try{
+                    statusText.setText("File copied - " + result);
+                    File recvFile_encrypt = new File(result);
 
-                File recvFile = new File(result);
-                Uri fileUri = FileProvider.getUriForFile(
-                        context,
-                        "com.example.android.wifidirect.fileprovider",
-                        recvFile);
-                Intent intent = new Intent();
-                intent.setAction(android.content.Intent.ACTION_VIEW);
-                intent.setDataAndType(fileUri, "*/*");
-                intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                //查看接收到的文件
-                context.startActivity(intent);
+                    // Set up the input and output streams
+                    Key key = new SecretKeySpec("1234567890abcdef".getBytes(), "AES");
+                    Cipher cipher = Cipher.getInstance("AES");
+                    cipher.init(Cipher.DECRYPT_MODE, key);
+
+                    String newpath = context.getExternalFilesDir("received")+"/wifip2pshared-" + System.currentTimeMillis()+"."+file_type;
+                    File decrypt_File = new File(newpath);
+                    decrypt_File.createNewFile();
+                    FileInputStream in = new FileInputStream(recvFile_encrypt);
+                    FileOutputStream out = new FileOutputStream(decrypt_File);
+
+                    // Decrypt the file
+                    byte[] buffer = new byte[1024];
+                    int length;
+                    while ((length = in.read(buffer)) != -1) {
+                        out.write(cipher.update(buffer, 0, length));
+                    }
+                    out.write(cipher.doFinal());
+
+                    // Close the streams
+                    in.close();
+                    out.close();
+
+                    Uri fileUri = FileProvider.getUriForFile(
+                            context,
+                            "com.example.android.wifidirect.fileprovider",
+                            decrypt_File);
+                    Intent intent = new Intent();
+                    intent.setAction(android.content.Intent.ACTION_VIEW);
+                    intent.setDataAndType(fileUri, "*/*");
+                    intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    //查看接收到的文件
+                    context.startActivity(intent);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
             }
 
         }

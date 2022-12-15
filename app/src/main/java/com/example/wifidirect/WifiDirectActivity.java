@@ -289,32 +289,6 @@ public class WifiDirectActivity extends Activity implements ChannelListener, Dev
     @SuppressLint("MissingPermission")
     @Override
     public void connect(WifiP2pConfig config) {
-        /*temp_manager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
-        temp_channel = temp_manager.initialize(this, getMainLooper(), null);
-        temp_manager.createGroup(temp_channel, new WifiP2pManager.ActionListener() {
-            @Override
-            public void onSuccess() {}
-
-            @Override
-            public void onFailure(int reason) {
-                showToast("创建群组失败");
-            }
-        });
-        info = DeviceDetailFragment.getInfo();
-        member_IP = info.groupOwnerAddress.getHostAddress();
-        temp_manager.removeGroup(temp_channel, new ActionListener() {
-
-            @Override
-            public void onFailure(int reasonCode) {
-                Log.d(TAG, "Disconnect failed. Reason :" + reasonCode);
-
-            }
-
-            @Override
-            public void onSuccess() {}
-
-        });*/
-
         //启动与具有指定配置的设备的对等连接
         //config.notify();
         manager.connect(channel, config, new ActionListener() {
@@ -353,58 +327,6 @@ public class WifiDirectActivity extends Activity implements ChannelListener, Dev
 
         });
     }
-
-    /*@Override
-    public String get_own_ip(String mac) {
-        try {
-            List<NetworkInterface> interfaces = Collections
-                    .list(NetworkInterface.getNetworkInterfaces());
-            final DeviceListFragment fragment = (DeviceListFragment) getFragmentManager()
-                    .findFragmentById(R.id.frag_list);
-            for (NetworkInterface intf : interfaces) {
-                //String a = getMACAddress(intf.getName());
-                //String b = fragment.getDevice().deviceAddress;
-                if (!getMACAddress(intf.getName()).equalsIgnoreCase(mac)) {
-                    // Log.v(TAG, "ignore the interface " + intf.getName());
-                    continue;
-                }
-                if (!intf.getName().contains("p2p"))
-                    continue;
-
-                Log.v(TAG,
-                        intf.getName() + "   " + getMACAddress(intf.getName()));
-
-                List<InetAddress> addrs = Collections.list(intf
-                        .getInetAddresses());
-
-                for (InetAddress addr : addrs) {
-                    // Log.v(TAG, "inside");
-
-                    if (!addr.isLoopbackAddress()) {
-                        // Log.v(TAG, "isnt loopback");
-                        String sAddr = addr.getHostAddress().toUpperCase();
-                        Log.v(TAG, "ip=" + sAddr);
-
-                        boolean isIPv4 = sAddr instanceof String;
-
-                        if (isIPv4) {
-                            if (sAddr.contains("192.168.49.")) {
-                                Log.v(TAG, "ip = " + sAddr);
-                                return sAddr;
-                            }
-                        }
-
-                    }
-
-                }
-            }
-
-        } catch (Exception ex) {
-            Log.v(TAG, "error in parsing");
-        } // for now eat exceptions
-        Log.v(TAG, "returning empty ip address");
-        return "";
-    }*/
 
     @Override
     public void onChannelDisconnected() {
@@ -457,36 +379,5 @@ public class WifiDirectActivity extends Activity implements ChannelListener, Dev
             }
         }
 
-    }
-
-    public static String getMACAddress(String interfaceName) {
-        try {
-            List<NetworkInterface> interfaces = Collections
-                    .list(NetworkInterface.getNetworkInterfaces());
-
-            for (NetworkInterface intf : interfaces) {
-                if (interfaceName != null) {
-                    if (!intf.getName().equalsIgnoreCase(interfaceName))
-                        continue;
-                }
-                byte[] mac = intf.getHardwareAddress();
-                if (mac == null)
-                    return "";
-                StringBuilder buf = new StringBuilder();
-                for (int idx = 0; idx < mac.length; idx++)
-                    buf.append(String.format("%02X:", mac[idx]));
-                if (buf.length() > 0)
-                    buf.deleteCharAt(buf.length() - 1);
-                return buf.toString();
-            }
-        } catch (Exception ex) {
-        } // for now eat exceptions
-        return "";
-        /*
-         * try { // this is so Linux hack return
-         * loadFileAsString("/sys/class/net/" +interfaceName +
-         * "/address").toUpperCase().trim(); } catch (IOException ex) { return
-         * null; }
-         */
     }
 }

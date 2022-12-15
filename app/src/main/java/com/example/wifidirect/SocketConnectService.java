@@ -11,8 +11,8 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 
 /**
- * A service that process each file transfer request i.e Intent by opening a
- * socket connection with the WiFi Direct Group Owner and writing the file
+ * A service that ran by the group owner(server) to accept the connection from group members(client)
+ * to get group members' ip address and their group number
  */
 public class SocketConnectService extends IntentService {
 
