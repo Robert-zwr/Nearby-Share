@@ -24,16 +24,13 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 
 import com.example.wifidirect.DeviceListFragment.DeviceActionListener;
-
-import java.net.NetworkInterface;
-import java.util.Collections;
-import java.util.List;
 
 
 public class WifiDirectActivity extends Activity implements ChannelListener, DeviceActionListener{
@@ -44,16 +41,14 @@ public class WifiDirectActivity extends Activity implements ChannelListener, Dev
     private static final int CODE_REQ_PERMISSIONS = 665;
 
     private WifiP2pManager manager;
-    //private WifiP2pManager temp_manager;
     private boolean isWifiP2pEnabled = false;
     private boolean retryChannel = false;
 
     private final IntentFilter intentFilter = new IntentFilter();
     private Channel channel;
-    //private Channel temp_channel;
-    //private WifiP2pInfo info;
-    public static String member_IP;
     private BroadcastReceiver receiver = null;
+
+    public static int group_number_text;
 
     /**
      * @param isWifiP2pEnabled the isWifiP2pEnabled to set
@@ -139,6 +134,14 @@ public class WifiDirectActivity extends Activity implements ChannelListener, Dev
                                 Manifest.permission.ACCESS_WIFI_STATE,
                                 Manifest.permission.CHANGE_WIFI_STATE,
                                 Manifest.permission.ACCESS_FINE_LOCATION}, CODE_REQ_PERMISSIONS));
+        EditText group_number = findViewById(R.id.group_number);
+        findViewById(R.id.confirm_group_number).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                group_number_text = Integer.parseInt(group_number.getText().toString());
+                Log.e("NearbyShare","输入群组号"+group_number_text);
+            }
+        });
         // add necessary intent values to be matched.
         //WLAN P2P API定义当发生特定WLAN P2P事件时会广播的Intent，例如发现新的对等设备时，或设备的 WLAN 状态更改时
         //WiFIDirectBroadcastReceiver.java创建了处理这些 Intent 的广播接收器，在应用中注册接收这些Intent

@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent">
+    android:layout_height="fill_parent"
+    android:orientation="vertical">
+
     <Button
         android:id="@+id/btnCheckPermission"
         android:layout_width="match_parent"
@@ -12,19 +13,39 @@
         android:text="检查权限" />
     <LinearLayout
         android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <EditText
+            android:id="@+id/group_number"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:hint="@string/hint"
+            android:inputType="number"
+            android:textColorHint="@color/gray" />
+        <Button
+            android:id="@+id/confirm_group_number"
+            android:layout_width="80dp"
+            android:layout_height="wrap_content"
+            android:text="@string/confirm" />
+    </LinearLayout>
+
+    <LinearLayout
         android:id="@+id/linearLayout1"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
+
         <fragment
-            class="com.example.wifidirect.DeviceListFragment"
             android:id="@+id/frag_list"
+            class="com.example.wifidirect.DeviceListFragment"
             android:layout_width="match_parent"
             android:layout_height="200dp">
             <!-- Preview: layout=@layout/row_devices -->
         </fragment>
+
         <fragment
-            class="com.example.wifidirect.DeviceDetailFragment"
             android:id="@+id/frag_detail"
+            class="com.example.wifidirect.DeviceDetailFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
             <!-- Preview: layout=@layout/device_detail -->

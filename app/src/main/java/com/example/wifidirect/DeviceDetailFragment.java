@@ -35,17 +35,14 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
 import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
+import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
 import javax.crypto.Cipher;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 
 
@@ -140,25 +137,34 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
         TextView statusText = (TextView) mContentView.findViewById(R.id.status_text);
         statusText.setText("Sending: " + uri);
         Log.d(WifiDirectActivity.TAG, "Intent----------- " + uri);
-        Map<String,Integer> map = GetMemberIPAsyncTask.map;
+        String path;
+        try {
+            path = FileUtils.getFilePathByUri(context,uri);
+            fileType = path.substring(path.lastIndexOf('.')+1);
+        } catch (IOException e) {
+            path = "";
+            fileType = "txt";
+        }
+        String My_Group_Number_hashed = "";
+        try {
+            String My_Group_Number = "" + WifiDirectActivity.group_number_text;
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(My_Group_Number.getBytes("UTF-8"));
+            byte[] result = md.digest();
+            My_Group_Number_hashed = new String(result, StandardCharsets.UTF_8);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        Map<String,String> map = GetMemberIPAsyncTask.map;
         Set<String> set=map.keySet();
         Iterator<String> it=set.iterator();
         while(it.hasNext()){
             String ip = it.next();
-            int Group_Number = map.get(ip);
-            if(Group_Number == 0){
+            String Group_Number_hashed = map.get(ip);
+            if(Group_Number_hashed.equals(My_Group_Number_hashed)){
                 //调用文件传输服务
                 Intent serviceIntent = new Intent(getActivity(), FileTransferService.class);
                 serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
-                //获取文件类型
-                String path;
-                try {
-                    path = FileUtils.getFilePathByUri(context,uri);
-                    fileType = path.substring(path.lastIndexOf('.')+1);
-                } catch (IOException e) {
-                    path = "";
-                    fileType = "txt";
-                }
                 //将文件uri、连接设备的信息文件类型传递给服务
                 serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_URI, uri.toString());
                 //serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,info.groupOwnerAddress.getHostAddress());
@@ -198,6 +204,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
             serviceIntent.setAction(SocketConnectService.ACTION_CONNECT_SOCKET);
             serviceIntent.putExtra(SocketConnectService.EXTRAS_GROUP_OWNER_ADDRESS,info.groupOwnerAddress.getHostAddress());
             serviceIntent.putExtra(SocketConnectService.EXTRAS_GROUP_OWNER_PORT, 8989);
+            serviceIntent.putExtra(SocketConnectService.EXTRAS_GROUP_NUMBER,WifiDirectActivity.group_number_text);
             getActivity().startService(serviceIntent);
 
             //非群主准备进行文件接收，为避免UI阻塞卡顿，进入后台异步任务，本质为多线程
@@ -425,8 +432,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
         int len;
         int sentSize=0;
         float perc;
-        //progressDialogSent.show();
-        //progressDialogSent.setCancelable(false);
+
         try {
             int totSize = inputStream.available();
             while ((len = inputStream.read(buf)) != -1) {
@@ -454,8 +460,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
 
         private Context context;
         private TextView statusText;
-        //public static ArrayList<String> ip_list = new ArrayList<>();
-        public static Map<String,Integer> map = new HashMap<>();
+        public static Map<String,String> map = new HashMap<>();
 
         /**
          * @param context
@@ -477,13 +482,14 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
 
                     InputStream inputstream = client.getInputStream();
                     String mem_ip = ""+client.getInetAddress();
-                    //ip_list.add(mem_ip);
-                    map.put(mem_ip,0);
+                    byte[] buf = new byte[16];
+                    inputstream.read(buf);
+                    String mem_group_num_hashed = new String(buf, StandardCharsets.UTF_8);
+                    map.put(mem_ip,mem_group_num_hashed);
                     client.close();
                 }
             }catch (IOException e) {
                 Log.e(WifiDirectActivity.TAG, e.getMessage());
-                //return null;
             }
             return null;
         }
