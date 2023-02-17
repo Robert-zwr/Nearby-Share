@@ -84,8 +84,8 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                 if (progressDialog != null && progressDialog.isShowing()) {
                     progressDialog.dismiss();
                 }
-                progressDialog = ProgressDialog.show(getActivity(), "Press back to cancel",
-                        "Connecting to :" + device.deviceAddress, true, true
+                progressDialog = ProgressDialog.show(getActivity(), "点击返回取消",
+                        "正在连接到 :" + device.deviceAddress, true, true
 //                        new DialogInterface.OnCancelListener() {
 //
 //                            @Override
@@ -135,7 +135,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
         // FileTransferService.
         Uri uri = data.getData();
         TextView statusText = (TextView) mContentView.findViewById(R.id.status_text);
-        statusText.setText("Sending: " + uri);
+        statusText.setText("发送已选文件: " + uri);
         Log.d(WifiDirectActivity.TAG, "Intent----------- " + uri);
         String path;
         try {
@@ -156,8 +156,8 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
             e.printStackTrace();
         }
         Map<String,String> map = GetMemberIPAsyncTask.map;
-        Set<String> set=map.keySet();
-        Iterator<String> it=set.iterator();
+        Set<String> set = map.keySet();
+        Iterator<String> it = set.iterator();
         while(it.hasNext()){
             String ip = it.next();
             String Group_Number_hashed = map.get(ip);
@@ -330,7 +330,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
         protected void onPostExecute(String result) {
             if (result != null) {
                 try{
-                    statusText.setText("File copied - " + result);
+                    statusText.setText("文件已接收至 - " + result);
                     File recvFile_encrypt = new File(result);
 
                     // Set up the input and output streams
@@ -379,7 +379,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
          */
         @Override
         protected void onPreExecute() {
-            statusText.setText("Opening a server socket");
+            statusText.setText("启动socket连接");
         }
 
     }
@@ -506,9 +506,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
          * @see android.os.AsyncTask#onPreExecute()
          */
         @Override
-        protected void onPreExecute() {
-            statusText.setText("Waiting for group member ip");
-        }
+        protected void onPreExecute() {}
 
     }
 }

@@ -142,6 +142,17 @@ public class WifiDirectActivity extends Activity implements ChannelListener, Dev
                 Log.e("NearbyShare","输入群组号"+group_number_text);
             }
         });
+        findViewById(R.id.btn_reset).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ((DeviceListFragment.DeviceActionListener) WifiDirectActivity.this).disconnect();
+                Intent intent = WifiDirectActivity.this.getPackageManager().getLaunchIntentForPackage(WifiDirectActivity.this.getPackageName());
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                //与正常页面跳转一样可传递序列化数据, 在Launch页面内获得
+                intent.putExtra("REBOOT","reboot");
+                startActivity(intent);
+            }
+        });
         // add necessary intent values to be matched.
         //WLAN P2P API定义当发生特定WLAN P2P事件时会广播的Intent，例如发现新的对等设备时，或设备的 WLAN 状态更改时
         //WiFIDirectBroadcastReceiver.java创建了处理这些 Intent 的广播接收器，在应用中注册接收这些Intent

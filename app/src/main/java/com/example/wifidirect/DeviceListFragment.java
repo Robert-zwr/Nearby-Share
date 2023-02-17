@@ -40,9 +40,6 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
     View mContentView = null;
     private WifiP2pDevice device;
 
-    /*public static ArrayList<String> getMAC_info(){
-        return MAC_info;
-    }*/
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {

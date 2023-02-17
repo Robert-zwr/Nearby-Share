@@ -4,13 +4,23 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical">
-
-    <Button
-        android:id="@+id/btnCheckPermission"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="12dp"
-        android:text="检查权限" />
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/btnCheckPermission"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="12dp"
+            android:text="@string/check_permission" />
+        <Button
+            android:id="@+id/btn_reset"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="12dp"
+            android:text="@string/reset_button" />
+    </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -2,6 +2,7 @@
     <string name="app_name">NearbyShare</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="check_permission">检查权限</string>
     <string name="enable_p2p_button">开启/关闭WIFI直连</string>
     <string name="discover_peers_button">搜索附近设备</string>
     <string name="create_group_button">创建群组</string>
@@ -10,6 +11,7 @@
     <string name="connect_peer_button">连接</string>
     <string name="disconnect_peer_button">断开</string>
     <string name="get_file_button">选择文件</string>
+    <string name="reset_button">重置</string>
     <string name="empty"></string>
     <string name="yes">是</string>
     <string name="no">否</string>
