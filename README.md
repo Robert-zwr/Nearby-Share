@@ -24,7 +24,7 @@
 
 ## 安装
 
-[下载链接](https://github.com/Robert-zwr/Nearby-Share/raw/main/NearbyShare.apk)
+[下载链接](https://github.com/Robert-zwr/Nearby-Share/releases/download/v0.1.0/NearbyShare-v010.apk)
 
 下载后在安卓设备上打开该apk文件即可进行安装（需要设备API级别14+）。
 
