@@ -274,6 +274,14 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
             this.context = context;
             this.statusText = (TextView) statusText;
         }
+        /*
+         * (non-Javadoc)
+         * @see android.os.AsyncTask#onPreExecute()
+         */
+        @Override
+        protected void onPreExecute() {
+            statusText.setText("启动socket连接");
+        }
 
         @Override
         protected String doInBackground(Void... params) {
@@ -371,15 +379,6 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                 }
             }
 
-        }
-
-        /*
-         * (non-Javadoc)
-         * @see android.os.AsyncTask#onPreExecute()
-         */
-        @Override
-        protected void onPreExecute() {
-            statusText.setText("启动socket连接");
         }
 
     }

@@ -83,7 +83,6 @@ public class FileTransferService extends IntentService {
                 Key key = new SecretKeySpec("1234567890abcdef".getBytes(), "AES");
                 Cipher cipher = Cipher.getInstance("AES");
                 cipher.init(Cipher.ENCRYPT_MODE, key);
-
                 String filePath = intent.getExtras().getString(EXTRAS_FILE_PATH);
                 String newpath = context.getExternalFilesDir("received")+"/wifip2pshared-" + System.currentTimeMillis()+"."+fileType;
                 File encrypt_File = new File(newpath);
