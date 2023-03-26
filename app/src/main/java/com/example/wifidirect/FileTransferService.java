@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
+import android.net.Uri;
 
 import androidx.core.content.FileProvider;
 
@@ -83,11 +84,19 @@ public class FileTransferService extends IntentService {
                 Key key = new SecretKeySpec("1234567890abcdef".getBytes(), "AES");
                 Cipher cipher = Cipher.getInstance("AES");
                 cipher.init(Cipher.ENCRYPT_MODE, key);
+
                 String filePath = intent.getExtras().getString(EXTRAS_FILE_PATH);
                 String newpath = context.getExternalFilesDir("received")+"/wifip2pshared-" + System.currentTimeMillis()+"."+fileType;
                 File encrypt_File = new File(newpath);
                 encrypt_File.createNewFile();
-                FileInputStream in = new FileInputStream(filePath);
+
+                //is = cr.openInputStream(Uri.parse(fileUri));
+                FileInputStream in = null;
+                try{
+                    in = new FileInputStream(filePath);
+                }catch (FileNotFoundException e){
+                    in = (FileInputStream) cr.openInputStream(Uri.parse(fileUri));
+                }
                 FileOutputStream out = new FileOutputStream(encrypt_File);
 
                 // Encrypt the file
